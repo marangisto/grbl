@@ -23,10 +23,13 @@
 
 void coolant_init()
 {
+/*
+ * FIXME!
   COOLANT_FLOOD_DDR |= (1 << COOLANT_FLOOD_BIT); // Configure as output pin
   #ifdef ENABLE_M7
     COOLANT_MIST_DDR |= (1 << COOLANT_MIST_BIT);
   #endif
+*/
   coolant_stop();
 }
 
@@ -35,6 +38,8 @@ void coolant_init()
 uint8_t coolant_get_state()
 {
   uint8_t cl_state = COOLANT_STATE_DISABLE;
+/*
+ * FIXME!
   #ifdef INVERT_COOLANT_FLOOD_PIN
     if (bit_isfalse(COOLANT_FLOOD_PORT,(1 << COOLANT_FLOOD_BIT))) {
   #else
@@ -51,6 +56,7 @@ uint8_t coolant_get_state()
       cl_state |= COOLANT_STATE_MIST;
     }
   #endif
+*/
   return(cl_state);
 }
 
@@ -59,6 +65,8 @@ uint8_t coolant_get_state()
 // an interrupt-level. No report flag set, but only called by routines that don't need it.
 void coolant_stop()
 {
+/*
+ * FIXME!
   #ifdef INVERT_COOLANT_FLOOD_PIN
     COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
   #else
@@ -71,6 +79,7 @@ void coolant_stop()
       COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
     #endif
   #endif
+*/
 }
 
 
@@ -80,6 +89,8 @@ void coolant_stop()
 // parser program end, and g-code parser coolant_sync().
 void coolant_set_state(uint8_t mode)
 {
+/*
+ * FIXME!
   if (sys.abort) { return; } // Block during abort.  
   
 	if (mode & COOLANT_FLOOD_ENABLE) {
@@ -113,6 +124,7 @@ void coolant_set_state(uint8_t mode)
 	#endif
 	
   sys.report_ovr_counter = 0; // Set to report change immediately
+*/
 }
 
 

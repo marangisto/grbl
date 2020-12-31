@@ -28,6 +28,8 @@
 
 #include "grbl.h"
 
+// FIXME!
+#define PSTR(x) x
 
 // Internal report utilities to reduce flash with repetitive tasks turned into functions.
 void report_util_setting_prefix(uint8_t n) { serial_write('$'); print_uint8_base10(n); serial_write('='); }

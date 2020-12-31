@@ -223,6 +223,8 @@ static st_prep_t prep;
 // enabled. Startup init and limits call this function but shouldn't start the cycle.
 void st_wake_up()
 {
+/*
+ * FIXME!
   // Enable stepper drivers.
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
   else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
@@ -243,12 +245,15 @@ void st_wake_up()
 
   // Enable Stepper Driver Interrupt
   TIMSK1 |= (1<<OCIE1A);
+*/
 }
 
 
 // Stepper shutdown
 void st_go_idle()
 {
+/*
+ * FIXME!
   // Disable Stepper Driver Interrupt. Allow Stepper Port Reset Interrupt to finish, if active.
   TIMSK1 &= ~(1<<OCIE1A); // Disable Timer1 interrupt
   TCCR1B = (TCCR1B & ~((1<<CS12) | (1<<CS11))) | (1<<CS10); // Reset clock to no prescaling.
@@ -265,6 +270,7 @@ void st_go_idle()
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { pin_state = !pin_state; } // Apply pin invert.
   if (pin_state) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
   else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
+*/
 }
 
 
@@ -316,6 +322,8 @@ void st_go_idle()
 // TODO: Replace direct updating of the int32 position counters in the ISR somehow. Perhaps use smaller
 // int8 variables and update position counters only when a segment completes. This can get complicated
 // with probing and homing cycles that require true real-time positions.
+/*
+ * FIXME!
 ISR(TIMER1_COMPA_vect)
 {
   if (busy) { return; } // The busy-flag is used to avoid reentering this interrupt
@@ -473,7 +481,7 @@ ISR(TIMER1_COMPA_vect)
   #endif
   busy = false;
 }
-
+*/
 
 /* The Stepper Port Reset Interrupt: Timer0 OVF interrupt handles the falling edge of the step
    pulse. This should always trigger before the next Timer1 COMPA interrupt and independently
@@ -486,6 +494,8 @@ ISR(TIMER1_COMPA_vect)
 // This interrupt is enabled by ISR_TIMER1_COMPAREA when it sets the motor port bits to execute
 // a step. This ISR resets the motor port after a short period (settings.pulse_microseconds)
 // completing one step cycle.
+/*
+ * FIXME!
 ISR(TIMER0_OVF_vect)
 {
   // Reset stepping pins (leave the direction pins)
@@ -495,12 +505,15 @@ ISR(TIMER0_OVF_vect)
   #endif
   TCCR0B = 0; // Disable Timer0 to prevent re-entering this interrupt when it's not needed.
 }
+*/
 #ifdef STEP_PULSE_DELAY
   // This interrupt is used only when STEP_PULSE_DELAY is enabled. Here, the step pulse is
   // initiated after the STEP_PULSE_DELAY time period has elapsed. The ISR TIMER2_OVF interrupt
   // will then trigger after the appropriate settings.pulse_microseconds, as in normal operation.
   // The new timing between direction, step pulse, and step complete events are setup in the
   // st_wake_up() routine.
+/*
+ * FIXME!
   ISR(TIMER0_COMPA_vect)
   {
     STEP_PORT = st.step_bits; // Begin step pulse.
@@ -508,6 +521,7 @@ ISR(TIMER0_OVF_vect)
       STEP_PORT_DUAL = st.step_bits_dual;
     #endif
   }
+*/
 #endif
 
 
@@ -549,10 +563,12 @@ void st_reset()
 
   st_generate_step_dir_invert_masks();
   st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default.
-
+/*
+ * FIXME!
   // Initialize step and direction port pins.
   STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
   DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
+*/
   
   #ifdef ENABLE_DUAL_AXIS
     st.dir_outbits_dual = dir_port_invert_mask_dual;
@@ -566,16 +582,20 @@ void st_reset()
 void stepper_init()
 {
   // Configure step and direction interface pins
+/*
+ * FIXME!
   STEP_DDR |= STEP_MASK;
   STEPPERS_DISABLE_DDR |= 1<<STEPPERS_DISABLE_BIT;
   DIRECTION_DDR |= DIRECTION_MASK;
-  
+*/  
   #ifdef ENABLE_DUAL_AXIS
     STEP_DDR_DUAL |= STEP_MASK_DUAL;
     DIRECTION_DDR_DUAL |= DIRECTION_MASK_DUAL;
   #endif
 
   // Configure Timer 1: Stepper Driver Interrupt
+/*
+ * FIXME!
   TCCR1B &= ~(1<<WGM13); // waveform generation = 0100 = CTC
   TCCR1B |=  (1<<WGM12);
   TCCR1A &= ~((1<<WGM11) | (1<<WGM10));
@@ -591,6 +611,7 @@ void stepper_init()
   #ifdef STEP_PULSE_DELAY
     TIMSK0 |= (1<<OCIE0A); // Enable Timer0 Compare Match A interrupt
   #endif
+*/
 }
 
 
@@ -1013,7 +1034,9 @@ void st_prep_buffer()
     float inv_rate = dt/(last_n_steps_remaining - step_dist_remaining); // Compute adjusted step rate inverse
 
     // Compute CPU cycles per step for the prepped segment.
-    uint32_t cycles = ceil( (TICKS_PER_MICROSECOND*1000000*60)*inv_rate ); // (cycles/step)
+    // FIXME!
+    //uint32_t cycles = ceil( (TICKS_PER_MICROSECOND*1000000*60)*inv_rate ); // (cycles/step)
+    uint32_t cycles = 0;
 
     #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
       // Compute step timing and multi-axis smoothing level.

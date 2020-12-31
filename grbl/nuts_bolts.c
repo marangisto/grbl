@@ -111,6 +111,8 @@ uint8_t read_float(char *line, uint8_t *char_counter, float *float_ptr)
 // Non-blocking delay function used for general operation and suspend features.
 void delay_sec(float seconds, uint8_t mode)
 {
+/*
+ * FIXME!
  	uint16_t i = ceil(1000/DWELL_TIME_STEP*seconds);
 	while (i-- > 0) {
 		if (sys.abort) { return; }
@@ -123,6 +125,7 @@ void delay_sec(float seconds, uint8_t mode)
 		}
 		_delay_ms(DWELL_TIME_STEP); // Delay DWELL_TIME_STEP increment
 	}
+*/
 }
 
 
@@ -130,7 +133,10 @@ void delay_sec(float seconds, uint8_t mode)
 // which only accepts constants in future compiler releases.
 void delay_ms(uint16_t ms)
 {
+/*
+ * FIXME!
   while ( ms-- ) { _delay_ms(1); }
+*/
 }
 
 
@@ -139,6 +145,8 @@ void delay_ms(uint16_t ms)
 // efficiently with larger delays, as the counter adds parasitic time in each iteration.
 void delay_us(uint32_t us)
 {
+/*
+ * FIXME!
   while (us) {
     if (us < 10) {
       _delay_us(1);
@@ -154,6 +162,7 @@ void delay_us(uint32_t us)
       us -= 1000;
     }
   }
+*/
 }
 
 

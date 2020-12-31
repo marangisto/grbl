@@ -40,6 +40,8 @@
 
 void limits_init()
 {
+/*
+ * FIXME!
   LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
 
   #ifdef DISABLE_LIMIT_PIN_PULL_UP
@@ -60,14 +62,18 @@ void limits_init()
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     WDTCSR = (1<<WDP0); // Set time-out at ~32msec.
   #endif
+*/
 }
 
 
 // Disables hard limits.
 void limits_disable()
 {
+/*
+ * FIXME!
   LIMIT_PCMSK &= ~LIMIT_MASK;  // Disable specific pins of the Pin Change Interrupt
   PCICR &= ~(1 << LIMIT_INT);  // Disable Pin Change Interrupt
+*/
 }
 
 
@@ -77,6 +83,8 @@ void limits_disable()
 uint8_t limits_get_state()
 {
   uint8_t limit_state = 0;
+/*
+ * FIXME!
   uint8_t pin = (LIMIT_PIN & LIMIT_MASK);
   #ifdef INVERT_LIMIT_PIN_MASK
     pin ^= INVERT_LIMIT_PIN_MASK;
@@ -91,6 +99,7 @@ uint8_t limits_get_state()
       if (pin & (1<<DUAL_LIMIT_BIT)) { limit_state |= (1 << N_AXIS); }
     #endif
   }
+*/
   return(limit_state);
 }
 
@@ -107,6 +116,8 @@ uint8_t limits_get_state()
 // special pinout for an e-stop, but it is generally recommended to just directly connect
 // your e-stop switch to the Arduino reset pin, since it is the most correct way to do this.
 #ifndef ENABLE_SOFTWARE_DEBOUNCE
+/*
+ * FIXME!
   ISR(LIMIT_INT_vect) // DEFAULT: Limit pin change interrupt process.
   {
     // Ignore limit switches if already in an alarm state or in-process of executing an alarm.
@@ -129,8 +140,11 @@ uint8_t limits_get_state()
       }
     }
   }
+*/
 #else // OPTIONAL: Software debounce limit pin routine.
   // Upon limit pin change, enable watchdog timer to create a short delay. 
+/*
+ * FIXME!
   ISR(LIMIT_INT_vect) { if (!(WDTCSR & (1<<WDIE))) { WDTCSR |= (1<<WDIE); } }
   ISR(WDT_vect) // Watchdog timer ISR
   {
@@ -145,6 +159,7 @@ uint8_t limits_get_state()
       }  
     }
   }
+*/
 #endif
 
 // Homes the specified cycle axes, sets the machine position, and performs a pull-off motion after

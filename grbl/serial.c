@@ -64,6 +64,8 @@ uint8_t serial_get_tx_buffer_count()
 
 void serial_init()
 {
+/*
+ * FIXME:
   // Set baud rate
   #if BAUD_RATE < 57600
     uint16_t UBRR0_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2 ;
@@ -79,6 +81,7 @@ void serial_init()
   UCSR0B |= (1<<RXEN0 | 1<<TXEN0 | 1<<RXCIE0);
 
   // defaults to 8-bit, no parity, 1 stop bit
+*/
 }
 
 
@@ -99,11 +102,14 @@ void serial_write(uint8_t data) {
   serial_tx_buffer_head = next_head;
 
   // Enable Data Register Empty Interrupt to make sure tx-streaming is running
-  UCSR0B |=  (1 << UDRIE0);
+  // FIXME!
+  // UCSR0B |=  (1 << UDRIE0);
 }
 
 
 // Data Register Empty Interrupt handler
+/*
+ * FIXME:
 ISR(SERIAL_UDRE)
 {
   uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
@@ -120,7 +126,7 @@ ISR(SERIAL_UDRE)
   // Turn off Data Register Empty Interrupt to stop tx-streaming if this concludes the transfer
   if (tail == serial_tx_buffer_head) { UCSR0B &= ~(1 << UDRIE0); }
 }
-
+*/
 
 // Fetches the first byte in the serial read buffer. Called by main program.
 uint8_t serial_read()
@@ -140,6 +146,8 @@ uint8_t serial_read()
 }
 
 
+/*
+ * FIXME:
 ISR(SERIAL_RX)
 {
   uint8_t data = UDR0;
@@ -196,6 +204,7 @@ ISR(SERIAL_RX)
       }
   }
 }
+*/
 
 
 void serial_reset_read_buffer()

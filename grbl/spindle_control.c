@@ -29,6 +29,8 @@
 
 void spindle_init()
 {
+/*
+ * FIXME!
   #ifdef VARIABLE_SPINDLE
     // Configure variable spindle PWM and enable pin, if requried. On the Uno, PWM and enable are
     // combined unless configured otherwise.
@@ -49,13 +51,15 @@ void spindle_init()
       SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT); // Configure as output pin.
     #endif
   #endif
-
+*/
   spindle_stop();
 }
 
 
 uint8_t spindle_get_state()
 {
+/*
+ * FIXME!
   #ifdef VARIABLE_SPINDLE
     #ifdef USE_SPINDLE_DIR_AS_ENABLE_PIN
       // No spindle direction output pin. 
@@ -88,6 +92,7 @@ uint8_t spindle_get_state()
       #endif
     }
   #endif
+*/
   return(SPINDLE_STATE_DISABLE);
 }
 
@@ -97,6 +102,8 @@ uint8_t spindle_get_state()
 // Called by spindle_init(), spindle_set_speed(), spindle_set_state(), and mc_reset().
 void spindle_stop()
 {
+/*
+ * FIXME!
   #ifdef VARIABLE_SPINDLE
     SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // Disable PWM. Output voltage is zero.
     #ifdef USE_SPINDLE_DIR_AS_ENABLE_PIN
@@ -113,6 +120,7 @@ void spindle_stop()
       SPINDLE_ENABLE_PORT &= ~(1<<SPINDLE_ENABLE_BIT); // Set pin to low
     #endif
   #endif
+*/
 }
 
 
@@ -121,6 +129,8 @@ void spindle_stop()
   // and stepper ISR. Keep routine small and efficient.
   void spindle_set_speed(uint8_t pwm_value)
   {
+/*
+ * FIXME!
     SPINDLE_OCR_REGISTER = pwm_value; // Set PWM output level.
     #ifdef SPINDLE_ENABLE_OFF_WITH_ZERO_SPEED
       if (pwm_value == SPINDLE_PWM_OFF_VALUE) {
@@ -140,6 +150,7 @@ void spindle_stop()
         SPINDLE_TCCRA_REGISTER |= (1<<SPINDLE_COMB_BIT); // Ensure PWM output is enabled.
       }
     #endif
+*/
   }
 
 
@@ -238,6 +249,8 @@ void spindle_stop()
     spindle_stop();
   
   } else {
+/*
+ * FIXME!
     
     #if !defined(USE_SPINDLE_DIR_AS_ENABLE_PIN) && !defined(ENABLE_DUAL_AXIS)
       if (state == SPINDLE_ENABLE_CW) {
@@ -264,7 +277,7 @@ void spindle_stop()
         SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);
       #endif    
     #endif
-  
+ */ 
   }
   
   sys.report_ovr_counter = 0; // Set to report change immediately
