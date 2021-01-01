@@ -166,28 +166,28 @@ extern volatile uint8_t sys_rt_exec_accessory_override; // Global realtime execu
 #endif
 
 // Initialize the serial protocol
-void system_init();
+EXTERN_C void system_init();
 
 // Returns bitfield of control pin states, organized by CONTROL_PIN_INDEX. (1=triggered, 0=not triggered).
-uint8_t system_control_get_state();
+EXTERN_C uint8_t system_control_get_state();
 
 // Returns if safety door is open or closed, based on pin state.
 uint8_t system_check_safety_door_ajar();
 
 // Executes an internal system command, defined as a string starting with a '$'
-uint8_t system_execute_line(char *line);
+EXTERN_C uint8_t system_execute_line(char *line);
 
 // Execute the startup script lines stored in EEPROM upon initialization
-void system_execute_startup(char *line);
+EXTERN_C void system_execute_startup(char *line);
 
 
 void system_flag_wco_change();
 
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
-float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx);
+EXTERN_C float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx);
 
 // Updates a machine 'position' array based on the 'step' array sent.
-void system_convert_array_steps_to_mpos(float *position, int32_t *steps);
+EXTERN_C void system_convert_array_steps_to_mpos(float *position, int32_t *steps);
 
 // CoreXY calculation only. Returns x or y-axis "steps" based on CoreXY motor steps.
 #ifdef COREXY

@@ -18,8 +18,12 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+extern "C"
+{
 #include "grbl.h"
+}
 
+#include <corona.h>
 
 void system_init()
 {
@@ -362,65 +366,49 @@ uint8_t system_check_travel_limits(float *target)
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
 void system_set_exec_state_flag(uint8_t mask) {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_state |= (mask);
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_state |= (mask);
 }
 
 void system_clear_exec_state_flag(uint8_t mask) {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_state &= ~(mask);
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_state &= ~(mask);
 }
 
 void system_set_exec_alarm(uint8_t code) {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_alarm = code;
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_alarm = code;
 }
 
 void system_clear_exec_alarm() {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_alarm = 0;
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_alarm = 0;
 }
 
 void system_set_exec_motion_override_flag(uint8_t mask) {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_motion_override |= (mask);
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_motion_override |= (mask);
 }
 
 void system_set_exec_accessory_override_flag(uint8_t mask) {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_accessory_override |= (mask);
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_accessory_override |= (mask);
 }
 
 void system_clear_exec_motion_overrides() {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_motion_override = 0;
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_motion_override = 0;
 }
 
 void system_clear_exec_accessory_overrides() {
-// FIXME!
-//  uint8_t sreg = SREG;
-//  cli();
-//  sys_rt_exec_accessory_override = 0;
-//  SREG = sreg;
+  critical_section_t cs;
+
+  sys_rt_exec_accessory_override = 0;
 }
