@@ -45,10 +45,6 @@ int main(void)
   system_init();   // Configure pinout pins and pin-change interrupt
 
   memset(sys_position,0,sizeof(sys_position)); // Clear machine position.
-/*
- * FIXME!
-  sei(); // Enable interrupts
-*/
 
   // Initialize system state.
   #ifdef FORCE_INITIALIZATION_ALARM
