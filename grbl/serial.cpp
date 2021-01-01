@@ -20,6 +20,12 @@
 */
 
 #include "grbl.h"
+#include "board.h"
+#include <textio.h>
+#include <usart.h>
+
+using serial = usart_t<SERIAL_USART, SERIAL_TX, SERIAL_RX>;
+using led = output_t<LED>;
 
 #define RX_RING_BUFFER (RX_BUFFER_SIZE+1)
 #define TX_RING_BUFFER (TX_BUFFER_SIZE+1)
@@ -64,24 +70,13 @@ uint8_t serial_get_tx_buffer_count()
 
 void serial_init()
 {
-/*
- * FIXME:
-  // Set baud rate
-  #if BAUD_RATE < 57600
-    uint16_t UBRR0_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2 ;
-    UCSR0A &= ~(1 << U2X0); // baud doubler off  - Only needed on Uno XXX
-  #else
-    uint16_t UBRR0_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-    UCSR0A |= (1 << U2X0);  // baud doubler on for high baud rates, i.e. 115200
-  #endif
-  UBRR0H = UBRR0_value >> 8;
-  UBRR0L = UBRR0_value;
+    serial::setup<BAUD_RATE>();
+    interrupt::set<SERIAL_ISR>();
+    interrupt::enable();
+    led::setup();
 
-  // enable rx, tx, and interrupt on complete reception of a byte
-  UCSR0B |= (1<<RXEN0 | 1<<TXEN0 | 1<<RXCIE0);
-
-  // defaults to 8-bit, no parity, 1 stop bit
-*/
+    printf<serial>("serial initialized!\n");
+    printf<serial>("sys-clock = %d\n", sys_clock::freq());
 }
 
 
@@ -102,31 +97,9 @@ void serial_write(uint8_t data) {
   serial_tx_buffer_head = next_head;
 
   // Enable Data Register Empty Interrupt to make sure tx-streaming is running
-  // FIXME!
-  // UCSR0B |=  (1 << UDRIE0);
+    serial::enable_tx_empty_interrupt();
 }
 
-
-// Data Register Empty Interrupt handler
-/*
- * FIXME:
-ISR(SERIAL_UDRE)
-{
-  uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
-
-  // Send a byte from the buffer
-  UDR0 = serial_tx_buffer[tail];
-
-  // Update tail position
-  tail++;
-  if (tail == TX_RING_BUFFER) { tail = 0; }
-
-  serial_tx_buffer_tail = tail;
-
-  // Turn off Data Register Empty Interrupt to stop tx-streaming if this concludes the transfer
-  if (tail == serial_tx_buffer_head) { UCSR0B &= ~(1 << UDRIE0); }
-}
-*/
 
 // Fetches the first byte in the serial read buffer. Called by main program.
 uint8_t serial_read()
@@ -145,12 +118,31 @@ uint8_t serial_read()
   }
 }
 
-
-/*
- * FIXME:
-ISR(SERIAL_RX)
+// Data Register Empty Interrupt handler
+template<> void handler<SERIAL_ISR>()
 {
-  uint8_t data = UDR0;
+    if (serial::tx_empty_interrupt_enabled() && serial::tx_empty())
+    {
+        uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
+
+        // Send a byte from the buffer
+        serial::raw_write(serial_tx_buffer[tail]);
+
+        // Update tail position
+        tail++;
+        if (tail == TX_RING_BUFFER) { tail = 0; }
+
+        serial_tx_buffer_tail = tail;
+
+  // Turn off Data Register Empty Interrupt to stop tx-streaming if this concludes the transfer
+        if (tail == serial_tx_buffer_head)
+            serial::disable_tx_empty_interrupt();
+    }
+    
+    if (!serial::rx_not_empty())
+        return;
+
+  uint8_t data = serial::raw_read();
   uint8_t next_head;
 
   // Pick off realtime command characters directly from the serial stream. These characters are
@@ -204,7 +196,6 @@ ISR(SERIAL_RX)
       }
   }
 }
-*/
 
 
 void serial_reset_read_buffer()

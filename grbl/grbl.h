@@ -25,6 +25,12 @@
 #define GRBL_VERSION "1.1h"
 #define GRBL_VERSION_BUILD "20190830"
 
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C
+#endif
+
 // Define standard libraries used by Grbl.
 // FIXME!
 //#include <avr/io.h>

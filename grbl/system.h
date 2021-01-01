@@ -199,14 +199,14 @@ void system_convert_array_steps_to_mpos(float *position, int32_t *steps);
 uint8_t system_check_travel_limits(float *target);
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
-void system_set_exec_state_flag(uint8_t mask);
-void system_clear_exec_state_flag(uint8_t mask);
-void system_set_exec_alarm(uint8_t code);
-void system_clear_exec_alarm();
-void system_set_exec_motion_override_flag(uint8_t mask);
-void system_set_exec_accessory_override_flag(uint8_t mask);
-void system_clear_exec_motion_overrides();
-void system_clear_exec_accessory_overrides();
+EXTERN_C void system_set_exec_state_flag(uint8_t mask);
+EXTERN_C void system_clear_exec_state_flag(uint8_t mask);
+EXTERN_C void system_set_exec_alarm(uint8_t code);
+EXTERN_C void system_clear_exec_alarm();
+EXTERN_C void system_set_exec_motion_override_flag(uint8_t mask);
+EXTERN_C void system_set_exec_accessory_override_flag(uint8_t mask);
+EXTERN_C void system_clear_exec_motion_overrides();
+EXTERN_C void system_clear_exec_accessory_overrides();
 
 
 #endif

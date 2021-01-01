@@ -32,12 +32,8 @@ void printString(const char *s)
 // Print a string stored in PGM-memory
 void printPgmString(const char *s)
 {
-    /*
-     * FIXME!
-  char c;
-  while ((c = pgm_read_byte_near(s++)))
-    serial_write(c);
-    */
+  while (*s)
+    serial_write(*s++);
 }
 
 

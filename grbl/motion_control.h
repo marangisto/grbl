@@ -61,6 +61,6 @@ void mc_override_ctrl_update(uint8_t override_state);
 void mc_parking_motion(float *parking_target, plan_line_data_t *pl_data);
 
 // Performs system reset. If in motion state, kills all motion and sets system alarm.
-void mc_reset();
+EXTERN_C void mc_reset();
 
 #endif
