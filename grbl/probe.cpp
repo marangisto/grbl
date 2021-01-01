@@ -19,7 +19,9 @@
 */
 
 #include "grbl.h"
+#include "board.h"
 
+using probe = input_t<PROBE>;
 
 // Inverts the probe pin state depending on user settings and probing cycle mode.
 uint8_t probe_invert_mask;
@@ -28,16 +30,12 @@ uint8_t probe_invert_mask;
 // Probe pin initialization routine.
 void probe_init()
 {
-/*
- * FIXME!
-  PROBE_DDR &= ~(PROBE_MASK); // Configure as input pins
   #ifdef DISABLE_PROBE_PIN_PULL_UP
-    PROBE_PORT &= ~(PROBE_MASK); // Normal low operation. Requires external pull-down.
+    probe::setup<pull_down>();
   #else
-    PROBE_PORT |= PROBE_MASK;    // Enable internal pull-up resistors. Normal high operation.
+    probe::setup<pull_up>();
   #endif
   probe_configure_invert_mask(false); // Initialize invert mask.
-*/
 }
 
 
@@ -53,8 +51,7 @@ void probe_configure_invert_mask(uint8_t is_probe_away)
 
 
 // Returns the probe pin state. Triggered = true. Called by gcode parser and probe state monitor.
-// FIXME!
-uint8_t probe_get_state() { return 0; /*((PROBE_PIN & PROBE_MASK) ^ probe_invert_mask);*/ }
+uint8_t probe_get_state() { return probe::read() ^ probe_invert_mask; }
 
 
 // Monitors probe pin state and records the system position when detected. Called by the
