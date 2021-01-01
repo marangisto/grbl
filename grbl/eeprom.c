@@ -38,6 +38,8 @@
 /* Define to reduce code size. */
 #define EEPROM_IGNORE_SELFPROG //!< Remove SPM flag polling.
 
+static unsigned char eeprom[128];
+
 /*! \brief  Read byte from EEPROM.
  *
  *  This function reads one byte from a given EEPROM address.
@@ -49,6 +51,10 @@
  */
 unsigned char eeprom_get_char( unsigned int addr )
 {
+    if (addr < sizeof(eeprom))
+        return eeprom[addr];
+    else
+        return 0;
 /*
  * FIXME!
 	do {} while( EECR & (1<<EEPE) ); // Wait for completion of previous write.
@@ -56,7 +62,6 @@ unsigned char eeprom_get_char( unsigned int addr )
 	EECR = (1<<EERE); // Start EEPROM read operation.
 	return EEDR; // Return the byte read from EEPROM.
 */
-    return 0;
 }
 
 /*! \brief  Write byte to EEPROM.
@@ -78,6 +83,9 @@ unsigned char eeprom_get_char( unsigned int addr )
  */
 void eeprom_put_char( unsigned int addr, unsigned char new_value )
 {
+    if (addr < sizeof(eeprom))
+        eeprom[addr] = new_value;
+
 /*
  * FIXME!
 	char old_value; // Old EEPROM value.
@@ -136,31 +144,24 @@ void eeprom_put_char( unsigned int addr, unsigned char new_value )
 
 
 void memcpy_to_eeprom_with_checksum(unsigned int destination, char *source, unsigned int size) {
-/*
- * FIXME!
   unsigned char checksum = 0;
   for(; size > 0; size--) { 
-    checksum = (checksum << 1) || (checksum >> 7);
+    checksum = (checksum << 1) | (checksum >> 7);
     checksum += *source;
     eeprom_put_char(destination++, *(source++)); 
   }
   eeprom_put_char(destination, checksum);
-*/
 }
 
 int memcpy_from_eeprom_with_checksum(char *destination, unsigned int source, unsigned int size) {
-/*
- * FIXME!
   unsigned char data, checksum = 0;
   for(; size > 0; size--) { 
     data = eeprom_get_char(source++);
-    checksum = (checksum << 1) || (checksum >> 7);
+    checksum = (checksum << 1) | (checksum >> 7);
     checksum += data;    
     *(destination++) = data; 
   }
   return(checksum == eeprom_get_char(source));
-*/
-    return 0;
 }
 
 // end of file
