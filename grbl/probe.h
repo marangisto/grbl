@@ -26,18 +26,18 @@
 #define PROBE_ACTIVE  1 // Actively watching the input pin.
 
 // Probe pin initialization routine.
-void probe_init();
+EXTERN_C void probe_init();
 
 // Called by probe_init() and the mc_probe() routines. Sets up the probe pin invert mask to
 // appropriately set the pin logic according to setting for normal-high/normal-low operation
 // and the probing cycle modes for toward-workpiece/away-from-workpiece.
-void probe_configure_invert_mask(uint8_t is_probe_away);
+EXTERN_C void probe_configure_invert_mask(uint8_t is_probe_away);
 
 // Returns probe pin state. Triggered = true. Called by gcode parser and probe state monitor.
-uint8_t probe_get_state();
+EXTERN_C uint8_t probe_get_state();
 
 // Monitors probe pin state and records the system position when detected. Called by the
 // stepper ISR per ISR tick.
-void probe_state_monitor();
+EXTERN_C void probe_state_monitor();
 
 #endif
