@@ -23,7 +23,6 @@
 
 settings_t settings;
 
-// FIXME!
 const /*__flash*/ settings_t defaults = {\
     .pulse_microseconds = DEFAULT_STEP_PULSE_MICROSECONDS,
     .stepper_idle_lock_time = DEFAULT_STEPPER_IDLE_LOCK_TIME,
