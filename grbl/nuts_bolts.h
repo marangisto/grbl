@@ -67,21 +67,21 @@
 // Read a floating point value from a string. Line points to the input buffer, char_counter
 // is the indexer pointing to the current character of the line, while float_ptr is
 // a pointer to the result variable. Returns true when it succeeds
-uint8_t read_float(char *line, uint8_t *char_counter, float *float_ptr);
+EXTERN_C uint8_t read_float(char *line, uint8_t *char_counter, float *float_ptr);
 
 // Non-blocking delay function used for general operation and suspend features.
-void delay_sec(float seconds, uint8_t mode);
+EXTERN_C void delay_sec(float seconds, uint8_t mode);
 
 // Delays variable-defined milliseconds. Compiler compatibility fix for _delay_ms().
-void delay_ms(uint16_t ms);
+EXTERN_C void delay_ms(uint16_t ms);
 
 // Delays variable-defined microseconds. Compiler compatibility fix for _delay_us().
-void delay_us(uint32_t us);
+EXTERN_C void delay_us(uint32_t us);
 
 // Computes hypotenuse, avoiding avr-gcc's bloated version and the extra error checking.
-float hypot_f(float x, float y);
+EXTERN_C float hypot_f(float x, float y);
 
-float convert_delta_vector_to_unit_vector(float *vector);
-float limit_value_by_axis_maximum(float *max_value, float *unit_vec);
+EXTERN_C float convert_delta_vector_to_unit_vector(float *vector);
+EXTERN_C float limit_value_by_axis_maximum(float *max_value, float *unit_vec);
 
 #endif
