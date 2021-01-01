@@ -28,7 +28,6 @@
 
 #include "grbl.h"
 
-// FIXME!
 #define PSTR(x) x
 
 // Internal report utilities to reduce flash with repetitive tasks turned into functions.
