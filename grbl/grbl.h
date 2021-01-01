@@ -32,12 +32,6 @@
 #endif
 
 // Define standard libraries used by Grbl.
-// FIXME!
-//#include <avr/io.h>
-//#include <avr/pgmspace.h>
-//#include <avr/interrupt.h>
-//#include <avr/wdt.h>
-//#include <util/delay.h>
 #include <math.h>
 #include <inttypes.h>
 #include <string.h>
