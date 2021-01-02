@@ -88,7 +88,6 @@ uint8_t limits_get_state()
 #ifdef ENABLE_DUAL_AXIS 
     static_assert(false, "implement ENABLE_DUAL_AXIS");
 #endif
-
     uint32_t x = limits::read();
 
     if (bit_isfalse(settings.flags,BITFLAG_INVERT_LIMIT_PINS))

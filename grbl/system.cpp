@@ -22,22 +22,25 @@ extern "C"
 {
 #include "grbl.h"
 }
+#include "board.h"
 
-#include <corona.h>
+using control = inputs_t
+    < CONTROL_RESET
+    , CONTROL_FEED_HOLD
+    , CONTROL_CYCLE_START
+    , CONTROL_SAFETY_DOOR
+    >;
 
 void system_init()
 {
-/*
- * FIXME!
-  CONTROL_DDR &= ~(CONTROL_MASK); // Configure as input pins
   #ifdef DISABLE_CONTROL_PIN_PULL_UP
-    CONTROL_PORT &= ~(CONTROL_MASK); // Normal low operation. Requires external pull-down.
+    control::setup<pull_down>();
+    control::enable_interrupt<rising_edge>();
   #else
-    CONTROL_PORT |= CONTROL_MASK;   // Enable internal pull-up resistors. Normal high operation.
+    control::setup<pull_up>();
+    control::enable_interrupt<falling_edge>();
   #endif
-  CONTROL_PCMSK |= CONTROL_MASK;  // Enable specific pins of the Pin Change Interrupt
-  PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
-*/
+    interrupt::set<CONTROL_ISR>();
 }
 
 
@@ -46,24 +49,10 @@ void system_init()
 // defined by the CONTROL_PIN_INDEX in the header file.
 uint8_t system_control_get_state()
 {
-  uint8_t control_state = 0;
-/*
- * FIXME!
-  uint8_t pin = (CONTROL_PIN & CONTROL_MASK) ^ CONTROL_MASK;
-  #ifdef INVERT_CONTROL_PIN_MASK
-    pin ^= INVERT_CONTROL_PIN_MASK;
-  #endif
-  if (pin) {
-    #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
-      if (bit_istrue(pin,(1<<CONTROL_SAFETY_DOOR_BIT))) { control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR; }
-    #else
-      if (bit_istrue(pin,(1<<CONTROL_FEED_HOLD_BIT))) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
-    #endif
-    if (bit_istrue(pin,(1<<CONTROL_RESET_BIT))) { control_state |= CONTROL_PIN_INDEX_RESET; }
-    if (bit_istrue(pin,(1<<CONTROL_CYCLE_START_BIT))) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
-  }
-*/
-  return(control_state);
+#ifdef INVERT_CONTROL_PIN_MASK
+    static_assert(false, "implement INVERT_CONTROLL_PIN_MASK");
+#endif
+    return control::read();
 }
 
 
@@ -71,29 +60,24 @@ uint8_t system_control_get_state()
 // only the realtime command execute variable to have the main program execute these when
 // its ready. This works exactly like the character-based realtime commands when picked off
 // directly from the incoming serial data stream.
-/*
- * FIXME!
-ISR(CONTROL_INT_vect)
+template<> void handler<CONTROL_ISR>()
 {
-  uint8_t pin = system_control_get_state();
-  if (pin) {
-    if (bit_istrue(pin,CONTROL_PIN_INDEX_RESET)) {
+    control::clear_interrupt(control::interrupt_pending());
+
+    uint32_t x = control::read();
+
+    if (x & (1 << CONTROL_PIN_INDEX_RESET))
       mc_reset();
-    }
-    if (bit_istrue(pin,CONTROL_PIN_INDEX_CYCLE_START)) {
+    if (x & (1 << CONTROL_PIN_INDEX_CYCLE_START))
       bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
-    }
-    #ifndef ENABLE_SAFETY_DOOR_INPUT_PIN
-      if (bit_istrue(pin,CONTROL_PIN_INDEX_FEED_HOLD)) {
-        bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
-    #else
-      if (bit_istrue(pin,CONTROL_PIN_INDEX_SAFETY_DOOR)) {
-        bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-    #endif
-    }
-  }
+    if (x & (1 << CONTROL_PIN_INDEX_FEED_HOLD))
+      bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
+#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+    static_assert(false, "implement SAFETY_DOOR");
+    if (x & (1 << CONTROL_PIN_INDEX_SAFETY_DOOR))
+      bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
+#endif
 }
-*/
 
 // Returns if safety door is ajar(T) or closed(F), based on pin state.
 uint8_t system_check_safety_door_ajar()
