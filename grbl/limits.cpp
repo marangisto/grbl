@@ -19,8 +19,13 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+extern "C"
+{
 #include "grbl.h"
+}
+#include "board.h"
 
+using limits = inputs_t<X_LIMIT, Y_LIMIT, Z_LIMIT>;
 
 // Homing axis search distance multiplier. Computed by this value times the cycle travel.
 #ifndef HOMING_AXIS_SEARCH_SCALAR
@@ -40,40 +45,35 @@
 
 void limits_init()
 {
-/*
- * FIXME!
-  LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
-
   #ifdef DISABLE_LIMIT_PIN_PULL_UP
-    LIMIT_PORT &= ~(LIMIT_MASK); // Normal low operation. Requires external pull-down.
+  limits::setup<pull_down>();
+  limits::enable_interrupt<rising_edge>();
   #else
-    LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation.
+  limits::setup<pull_up>();
+  limits::enable_interrupt<falling_edge>();
   #endif
 
   if (bit_istrue(settings.flags,BITFLAG_HARD_LIMIT_ENABLE)) {
-    LIMIT_PCMSK |= LIMIT_MASK; // Enable specific pins of the Pin Change Interrupt
-    PCICR |= (1 << LIMIT_INT); // Enable Pin Change Interrupt
+    interrupt::set<LIMIT_ISR>();
   } else {
     limits_disable();
   }
 
   #ifdef ENABLE_SOFTWARE_DEBOUNCE
+  static_assert(false, "implement ENABLE_SOFTWARE_DEBOUNCE!");
+/*
     MCUSR &= ~(1<<WDRF);
     WDTCSR |= (1<<WDCE) | (1<<WDE);
     WDTCSR = (1<<WDP0); // Set time-out at ~32msec.
-  #endif
 */
+  #endif
 }
 
 
 // Disables hard limits.
 void limits_disable()
 {
-/*
- * FIXME!
-  LIMIT_PCMSK &= ~LIMIT_MASK;  // Disable specific pins of the Pin Change Interrupt
-  PCICR &= ~(1 << LIMIT_INT);  // Disable Pin Change Interrupt
-*/
+    interrupt::clear<LIMIT_ISR>();
 }
 
 
@@ -82,25 +82,19 @@ void limits_disable()
 // number in bit position, i.e. Z_AXIS is (1<<2) or bit 2, and Y_AXIS is (1<<1) or bit 1.
 uint8_t limits_get_state()
 {
-  uint8_t limit_state = 0;
-/*
- * FIXME!
-  uint8_t pin = (LIMIT_PIN & LIMIT_MASK);
-  #ifdef INVERT_LIMIT_PIN_MASK
-    pin ^= INVERT_LIMIT_PIN_MASK;
-  #endif
-  if (bit_isfalse(settings.flags,BITFLAG_INVERT_LIMIT_PINS)) { pin ^= LIMIT_MASK; }
-  if (pin) {
-    uint8_t idx;
-    for (idx=0; idx<N_AXIS; idx++) {
-      if (pin & get_limit_pin_mask(idx)) { limit_state |= (1 << idx); }
-    }
-    #ifdef ENABLE_DUAL_AXIS
-      if (pin & (1<<DUAL_LIMIT_BIT)) { limit_state |= (1 << N_AXIS); }
-    #endif
-  }
-*/
-  return(limit_state);
+#ifdef INVERT_LIMIT_PIN_MASK 
+    static_assert(false, "implement INVERT_LIMIT_PIN_MASK");
+#endif
+#ifdef ENABLE_DUAL_AXIS 
+    static_assert(false, "implement ENABLE_DUAL_AXIS");
+#endif
+
+    uint32_t x = limits::read();
+
+    if (bit_isfalse(settings.flags,BITFLAG_INVERT_LIMIT_PINS))
+        x ^= 0x7;
+
+    return x;
 }
 
 
@@ -116,10 +110,9 @@ uint8_t limits_get_state()
 // special pinout for an e-stop, but it is generally recommended to just directly connect
 // your e-stop switch to the Arduino reset pin, since it is the most correct way to do this.
 #ifndef ENABLE_SOFTWARE_DEBOUNCE
-/*
- * FIXME!
-  ISR(LIMIT_INT_vect) // DEFAULT: Limit pin change interrupt process.
+template<> void handler<LIMIT_ISR>() // DEFAULT: Limit pin change interrupt process.
   {
+    limits::clear_interrupt(limits::interrupt_pending());
     // Ignore limit switches if already in an alarm state or in-process of executing an alarm.
     // When in the alarm state, Grbl should have been reset or will force a reset, so any pending
     // moves in the planner and serial buffers are all cleared and newly sent blocks will be
@@ -140,11 +133,10 @@ uint8_t limits_get_state()
       }
     }
   }
-*/
 #else // OPTIONAL: Software debounce limit pin routine.
   // Upon limit pin change, enable watchdog timer to create a short delay. 
+  static_assert(false, "implement ENABLE_SOFTWARE_DEBOUNCE!");
 /*
- * FIXME!
   ISR(LIMIT_INT_vect) { if (!(WDTCSR & (1<<WDIE))) { WDTCSR |= (1<<WDIE); } }
   ISR(WDT_vect) // Watchdog timer ISR
   {
