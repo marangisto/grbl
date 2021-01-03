@@ -263,7 +263,6 @@ void st_wake_up()
 void st_go_idle()
 {
   step_timer::disable_update_interrupt();
-  //step_timer::set_prescale(0);    // FIXME!
   busy = false;
 
   // Set stepper driver idle state, disabled or enabled, depending on settings and circumstances.
@@ -361,9 +360,7 @@ template<> void handler<STEP_TIMER_ISR>()
   reset_timer::enable_update_interrupt();
 
   busy = true;
-  // FIXME: ensure reset timer interrupt has higher priority!
-  //sei(); // Re-enable interrupts to allow Stepper Port Reset Interrupt to fire on-time.
-         // NOTE: The remaining code in this ISR will finish before returning to main program.
+  // NOTE: The remaining code in this ISR will finish before returning to main program.
 
   // If there is no step segment, attempt to pop one from the stepper buffer
   if (st.exec_segment == NULL) {
@@ -378,7 +375,6 @@ template<> void handler<STEP_TIMER_ISR>()
       #endif
 
       // Initialize step segment timing per step and load number of steps to execute.
-      // FIXME: remove: OCR1A = st.exec_segment->cycles_per_tick;
       step_timer::set_auto_reload_value(st.exec_segment->cycles_per_tick - 1);
       st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.
       // If the new segment starts a new planner block, initialize stepper variables and counters.
@@ -1023,9 +1019,7 @@ void st_prep_buffer()
     float inv_rate = dt/(last_n_steps_remaining - step_dist_remaining); // Compute adjusted step rate inverse
 
     // Compute CPU cycles per step for the prepped segment.
-    // FIXME!
-    //uint32_t cycles = ceil( (TICKS_PER_MICROSECOND*1000000*60)*inv_rate ); // (cycles/step)
-    uint32_t cycles = 65535;
+    uint32_t cycles = ceil((step_timer::clock() * 60 ) * inv_rate); // (cycles/step)
 
     #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
       // Compute step timing and multi-axis smoothing level.
@@ -1041,6 +1035,7 @@ void st_prep_buffer()
       if (cycles < (1UL << 16)) { prep_segment->cycles_per_tick = cycles; } // < 65536 (4.1ms @ 16MHz)
       else { prep_segment->cycles_per_tick = 0xffff; } // Just set the slowest speed possible.
     #else
+      static_assert(false, "AMASS mode required!");
       // Compute step timing and timer prescalar for normal step generation.
       if (cycles < (1UL << 16)) { // < 65536  (4.1ms @ 16MHz)
         prep_segment->prescaler = 1; // prescaler: 0
