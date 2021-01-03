@@ -33,15 +33,6 @@ using direction = outputs_t<X_DIRECTION, Y_DIRECTION, Z_DIRECTION>;
 using step_timer = tim_t<STEP_TIMER_NO>;
 using reset_timer = tim_t<RESET_TIMER_NO>;
 
-using led = output_t<LED>;
-
-struct here_t
-{
-    here_t() { led::set(); }
-    ~here_t() { led::clear(); }
-};
-
-
 // Some useful constants.
 #define DT_SEGMENT (1.0/(ACCELERATION_TICKS_PER_SECOND*60.0)) // min/segment
 #define REQ_MM_INCREMENT_SCALAR 1.25
@@ -607,7 +598,6 @@ void st_reset()
 void stepper_init()
 {
   // Configure step and direction interface pins
-  led::setup();
   step::setup();
   steppers_disable::setup();
   direction::setup();
