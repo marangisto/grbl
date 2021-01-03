@@ -262,20 +262,9 @@ void st_wake_up()
 // Stepper shutdown
 void st_go_idle()
 {
-    step_timer::disable_update_interrupt();
-    //step_timer::set_prescale(0);    // FIXME!
-/*
- * FIXME!
-  // Disable Stepper Driver Interrupt. Allow Stepper Port Reset Interrupt to finish, if active.
-  TIMSK1 &= ~(1<<OCIE1A); // Disable Timer1 interrupt
-  TCCR1B = (TCCR1B & ~((1<<CS12) | (1<<CS11))) | (1<<CS10); // Reset clock to no prescaling.
-*/
+  step_timer::disable_update_interrupt();
+  //step_timer::set_prescale(0);    // FIXME!
   busy = false;
-
-
-// FIXME: remove
-steppers_disable::write(true);
-return;
 
   // Set stepper driver idle state, disabled or enabled, depending on settings and circumstances.
   bool pin_state = false; // Keep enabled.
@@ -530,8 +519,7 @@ template<> void handler<RESET_TIMER_ISR>()
   // will then trigger after the appropriate settings.pulse_microseconds, as in normal operation.
   // The new timing between direction, step pulse, and step complete events are setup in the
   // st_wake_up() routine.
-/*
- * FIXME!
+  static_assert(false, "implement STEP_PULSE_DELAY");
   ISR(TIMER0_COMPA_vect)
   {
     STEP_PORT = st.step_bits; // Begin step pulse.
@@ -539,7 +527,6 @@ template<> void handler<RESET_TIMER_ISR>()
       STEP_PORT_DUAL = st.step_bits_dual;
     #endif
   }
-*/
 #endif
 
 
@@ -614,25 +601,6 @@ void stepper_init()
 
   reset_timer::setup(0, 1);
   interrupt::set<RESET_TIMER_ISR>();
-
-/*
- * FIXME!
-  TCCR1B &= ~(1<<WGM13); // waveform generation = 0100 = CTC
-  TCCR1B |=  (1<<WGM12);
-  TCCR1A &= ~((1<<WGM11) | (1<<WGM10));
-  TCCR1A &= ~((1<<COM1A1) | (1<<COM1A0) | (1<<COM1B1) | (1<<COM1B0)); // Disconnect OC1 output
-  // TCCR1B = (TCCR1B & ~((1<<CS12) | (1<<CS11))) | (1<<CS10); // Set in st_go_idle().
-  // TIMSK1 &= ~(1<<OCIE1A);  // Set in st_go_idle().
-
-  // Configure Timer 0: Stepper Port Reset Interrupt
-  TIMSK0 &= ~((1<<OCIE0B) | (1<<OCIE0A) | (1<<TOIE0)); // Disconnect OC0 outputs and OVF interrupt.
-  TCCR0A = 0; // Normal operation
-  TCCR0B = 0; // Disable Timer0 until needed
-  TIMSK0 |= (1<<TOIE0); // Enable Timer0 overflow interrupt
-  #ifdef STEP_PULSE_DELAY
-    TIMSK0 |= (1<<OCIE0A); // Enable Timer0 Compare Match A interrupt
-  #endif
-*/
 }
 
 

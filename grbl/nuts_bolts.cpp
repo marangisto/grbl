@@ -125,7 +125,7 @@ void delay_sec(float seconds, uint8_t mode)
 		  protocol_exec_rt_system();
 		  if (sys.suspend & SUSPEND_RESTART_RETRACT) { return; } // Bail, if safety door reopens.
 		}
-        sys_tick::delay_ms(DWELL_TIME_STEP); // Delay DWELL_TIME_STEP increment
+        delay_ms(DWELL_TIME_STEP); // Delay DWELL_TIME_STEP increment
 	}
 }
 
@@ -134,7 +134,7 @@ void delay_sec(float seconds, uint8_t mode)
 // which only accepts constants in future compiler releases.
 void delay_ms(uint16_t ms)
 {
-  while ( ms-- ) { sys_tick::delay_ms(1); }
+  while ( ms-- ) { delay_us(1); }
 }
 
 
@@ -154,7 +154,7 @@ void delay_us(uint32_t us)
       sys_tick::delay_us(100);
       us -= 100;
     } else {
-      sys_tick::delay_ms(1);
+      sys_tick::delay_us(1000);
       us -= 1000;
     }
   }
