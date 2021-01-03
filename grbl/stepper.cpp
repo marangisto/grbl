@@ -271,7 +271,6 @@ void st_wake_up()
 // Stepper shutdown
 void st_go_idle()
 {
-    here_t here;
     step_timer::disable_update_interrupt();
     //step_timer::set_prescale(0);    // FIXME!
 /*
