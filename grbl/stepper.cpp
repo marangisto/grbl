@@ -33,6 +33,14 @@ using direction = outputs_t<X_DIRECTION, Y_DIRECTION, Z_DIRECTION>;
 using step_timer = tim_t<STEP_TIMER_NO>;
 using reset_timer = tim_t<RESET_TIMER_NO>;
 
+using led = output_t<LED>;
+
+struct here_t
+{
+    here_t() { led::set(); }
+    ~here_t() { led::clear(); }
+};
+
 // Some useful constants.
 #define DT_SEGMENT (1.0/(ACCELERATION_TICKS_PER_SECOND*60.0)) // min/segment
 #define REQ_MM_INCREMENT_SCALAR 1.25
@@ -328,6 +336,8 @@ void st_go_idle()
 // with probing and homing cycles that require true real-time positions.
 template<> void handler<STEP_TIMER_ISR>()
 {
+  here_t here;  // measure isr duty.
+
   step_timer::clear_update_interrupt_flag();
   if (busy) { return; } // The busy-flag is used to avoid reentering this interrupt
   direction::write(st.dir_outbits);
@@ -597,6 +607,8 @@ void stepper_init()
 
   reset_timer::setup(0, 1);
   interrupt::set<RESET_TIMER_ISR>();
+
+  led::setup();
 }
 
 
