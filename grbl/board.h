@@ -12,8 +12,11 @@ static const pin_t          SERIAL_TX = PA2;
 static const pin_t          SERIAL_RX = PA3;
 static const interrupt_t    SERIAL_ISR = interrupt::USART2;
 
-static const int            TIMER_NO = 3;
-static const interrupt_t    TIMER_ISR = interrupt::TIM3;
+static const int            STEP_TIMER_NO = 3;
+static const interrupt_t    STEP_TIMER_ISR = interrupt::TIM3;
+
+static const int            RESET_TIMER_NO = 4;
+static const interrupt_t    RESET_TIMER_ISR = interrupt::TIM4;
 
 static const pin_t          X_STEP              = PB1;
 static const pin_t          Y_STEP              = PB2;

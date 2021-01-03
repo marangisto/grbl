@@ -19,7 +19,27 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+extern "C"
+{
 #include "grbl.h"
+}
+#include "board.h"
+#include <timer.h>
+
+using steppers_disable = output_t<STEPPERS_DISABLE>;
+using step = outputs_t<X_STEP, Y_STEP, Z_STEP>;
+using direction = outputs_t<X_DIRECTION, Y_DIRECTION, Z_DIRECTION>;
+
+using step_timer = tim_t<STEP_TIMER_NO>;
+using reset_timer = tim_t<RESET_TIMER_NO>;
+
+using led = output_t<LED>;
+
+struct here_t
+{
+    here_t() { led::set(); }
+    ~here_t() { led::clear(); }
+};
 
 
 // Some useful constants.
@@ -223,41 +243,49 @@ static st_prep_t prep;
 // enabled. Startup init and limits call this function but shouldn't start the cycle.
 void st_wake_up()
 {
-/*
- * FIXME!
-  // Enable stepper drivers.
-  if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
-  else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
+    steppers_disable::write(bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE));
 
   // Initialize stepper output bits to ensure first ISR call does not step.
   st.step_outbits = step_port_invert_mask;
-
   // Initialize step pulse timing from settings. Here to ensure updating after re-writing.
   #ifdef STEP_PULSE_DELAY
+  static_assert(false, "implement STEP_PULSE_DELAY");
     // Set total step pulse time after direction pin set. Ad hoc computation from oscilloscope.
     st.step_pulse_time = -(((settings.pulse_microseconds+STEP_PULSE_DELAY-2)*TICKS_PER_MICROSECOND) >> 3);
     // Set delay between direction pin write and step command.
     OCR0A = -(((settings.pulse_microseconds)*TICKS_PER_MICROSECOND) >> 3);
   #else // Normal operation
     // Set step pulse time. Ad hoc computation from oscilloscope. Uses two's complement.
-    st.step_pulse_time = -(((settings.pulse_microseconds-2)*TICKS_PER_MICROSECOND) >> 3);
+    reset_timer::set_auto_reload_value
+        ( (settings.pulse_microseconds - 1)
+        * (reset_timer::clock() / 1000000)
+        - 1
+        );
   #endif
-
-  // Enable Stepper Driver Interrupt
-  TIMSK1 |= (1<<OCIE1A);
-*/
+  step_timer::set_count(0);
+  step_timer::clear_update_interrupt_flag();
+  step_timer::enable_update_interrupt();
 }
 
 
 // Stepper shutdown
 void st_go_idle()
 {
+    here_t here;
+    step_timer::disable_update_interrupt();
+    //step_timer::set_prescale(0);    // FIXME!
 /*
  * FIXME!
   // Disable Stepper Driver Interrupt. Allow Stepper Port Reset Interrupt to finish, if active.
   TIMSK1 &= ~(1<<OCIE1A); // Disable Timer1 interrupt
   TCCR1B = (TCCR1B & ~((1<<CS12) | (1<<CS11))) | (1<<CS10); // Reset clock to no prescaling.
+*/
   busy = false;
+
+
+// FIXME: remove
+steppers_disable::write(true);
+return;
 
   // Set stepper driver idle state, disabled or enabled, depending on settings and circumstances.
   bool pin_state = false; // Keep enabled.
@@ -268,9 +296,7 @@ void st_go_idle()
     pin_state = true; // Override. Disable steppers.
   }
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { pin_state = !pin_state; } // Apply pin invert.
-  if (pin_state) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
-  else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
-*/
+  steppers_disable::write(pin_state);
 }
 
 
@@ -322,38 +348,42 @@ void st_go_idle()
 // TODO: Replace direct updating of the int32 position counters in the ISR somehow. Perhaps use smaller
 // int8 variables and update position counters only when a segment completes. This can get complicated
 // with probing and homing cycles that require true real-time positions.
-/*
- * FIXME!
-ISR(TIMER1_COMPA_vect)
+template<> void handler<STEP_TIMER_ISR>()
 {
+  step_timer::clear_update_interrupt_flag();
   if (busy) { return; } // The busy-flag is used to avoid reentering this interrupt
-
+  direction::write(st.dir_outbits);
   // Set the direction pins a couple of nanoseconds before we step the steppers
-  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | (st.dir_outbits & DIRECTION_MASK);
   #ifdef ENABLE_DUAL_AXIS
+    static_assert(false, "implement ENABLE_DUAL_AXIS");
     DIRECTION_PORT_DUAL = (DIRECTION_PORT_DUAL & ~DIRECTION_MASK_DUAL) | (st.dir_outbits_dual & DIRECTION_MASK_DUAL);
   #endif
 
   // Then pulse the stepping pins
   #ifdef STEP_PULSE_DELAY
+    static_assert(false, "implement STEP_PULSE_DELAY");
     st.step_bits = (STEP_PORT & ~STEP_MASK) | st.step_outbits; // Store out_bits to prevent overwriting.
     #ifdef ENABLE_DUAL_AXIS
+    static_assert(false, "implement ENABLE_DUAL_AXIS");
       st.step_bits_dual = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
     #endif
   #else  // Normal operation
-    STEP_PORT = (STEP_PORT & ~STEP_MASK) | st.step_outbits;
+    step::write(st.step_outbits);
     #ifdef ENABLE_DUAL_AXIS
+    static_assert(false, "implement ENABLE_DUAL_AXIS");
       STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
     #endif
   #endif
 
   // Enable step pulse reset timer so that The Stepper Port Reset Interrupt can reset the signal after
   // exactly settings.pulse_microseconds microseconds, independent of the main Timer1 prescaler.
-  TCNT0 = st.step_pulse_time; // Reload Timer0 counter
-  TCCR0B = (1<<CS01); // Begin Timer0. Full speed, 1/8 prescaler
+  reset_timer::set_count(0);
+  reset_timer::clear_update_interrupt_flag();
+  reset_timer::enable_update_interrupt();
 
   busy = true;
-  sei(); // Re-enable interrupts to allow Stepper Port Reset Interrupt to fire on-time.
+  // FIXME: ensure reset timer interrupt has higher priority!
+  //sei(); // Re-enable interrupts to allow Stepper Port Reset Interrupt to fire on-time.
          // NOTE: The remaining code in this ISR will finish before returning to main program.
 
   // If there is no step segment, attempt to pop one from the stepper buffer
@@ -369,7 +399,8 @@ ISR(TIMER1_COMPA_vect)
       #endif
 
       // Initialize step segment timing per step and load number of steps to execute.
-      OCR1A = st.exec_segment->cycles_per_tick;
+      // FIXME: remove: OCR1A = st.exec_segment->cycles_per_tick;
+      step_timer::set_auto_reload_value(st.exec_segment->cycles_per_tick - 1);
       st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.
       // If the new segment starts a new planner block, initialize stepper variables and counters.
       // NOTE: When the segment data index changes, this indicates a new planner block.
@@ -481,7 +512,6 @@ ISR(TIMER1_COMPA_vect)
   #endif
   busy = false;
 }
-*/
 
 /* The Stepper Port Reset Interrupt: Timer0 OVF interrupt handles the falling edge of the step
    pulse. This should always trigger before the next Timer1 COMPA interrupt and independently
@@ -494,18 +524,16 @@ ISR(TIMER1_COMPA_vect)
 // This interrupt is enabled by ISR_TIMER1_COMPAREA when it sets the motor port bits to execute
 // a step. This ISR resets the motor port after a short period (settings.pulse_microseconds)
 // completing one step cycle.
-/*
- * FIXME!
-ISR(TIMER0_OVF_vect)
+template<> void handler<RESET_TIMER_ISR>()
 {
-  // Reset stepping pins (leave the direction pins)
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
+    reset_timer::disable_update_interrupt();
+    step::write(step_port_invert_mask);
   #ifdef ENABLE_DUAL_AXIS
+    static_assert(false, "implement ENABLE_DUAL_AXIS");
     STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | (step_port_invert_mask_dual & STEP_MASK_DUAL);
   #endif
-  TCCR0B = 0; // Disable Timer0 to prevent re-entering this interrupt when it's not needed.
 }
-*/
+
 #ifdef STEP_PULSE_DELAY
   // This interrupt is used only when STEP_PULSE_DELAY is enabled. Here, the step pulse is
   // initiated after the STEP_PULSE_DELAY time period has elapsed. The ISR TIMER2_OVF interrupt
@@ -563,14 +591,12 @@ void st_reset()
 
   st_generate_step_dir_invert_masks();
   st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default.
-/*
- * FIXME!
   // Initialize step and direction port pins.
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
-  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
-*/
+  step::write(step_port_invert_mask);
+  direction::write(dir_port_invert_mask);
   
   #ifdef ENABLE_DUAL_AXIS
+    static_assert(false, "implement ENABLE_DUAL_AXIS");
     st.dir_outbits_dual = dir_port_invert_mask_dual;
     STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | step_port_invert_mask_dual;
     DIRECTION_PORT_DUAL = (DIRECTION_PORT_DUAL & ~DIRECTION_MASK_DUAL) | dir_port_invert_mask_dual;
@@ -582,18 +608,24 @@ void st_reset()
 void stepper_init()
 {
   // Configure step and direction interface pins
-/*
- * FIXME!
-  STEP_DDR |= STEP_MASK;
-  STEPPERS_DISABLE_DDR |= 1<<STEPPERS_DISABLE_BIT;
-  DIRECTION_DDR |= DIRECTION_MASK;
-*/  
+  led::setup();
+  step::setup();
+  steppers_disable::setup();
+  direction::setup();
+
   #ifdef ENABLE_DUAL_AXIS
     STEP_DDR_DUAL |= STEP_MASK_DUAL;
     DIRECTION_DDR_DUAL |= DIRECTION_MASK_DUAL;
   #endif
 
   // Configure Timer 1: Stepper Driver Interrupt
+
+  step_timer::setup(1, 0xffff);
+  interrupt::set<STEP_TIMER_ISR>();
+
+  reset_timer::setup(0, 1);
+  interrupt::set<RESET_TIMER_ISR>();
+
 /*
  * FIXME!
   TCCR1B &= ~(1<<WGM13); // waveform generation = 0100 = CTC
@@ -1036,7 +1068,7 @@ void st_prep_buffer()
     // Compute CPU cycles per step for the prepped segment.
     // FIXME!
     //uint32_t cycles = ceil( (TICKS_PER_MICROSECOND*1000000*60)*inv_rate ); // (cycles/step)
-    uint32_t cycles = 0;
+    uint32_t cycles = 65535;
 
     #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
       // Compute step timing and multi-axis smoothing level.
