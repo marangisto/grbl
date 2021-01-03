@@ -39,5 +39,7 @@ static const pin_t          CONTROL_CYCLE_START = PA12;
 static const pin_t          CONTROL_SAFETY_DOOR = PA13;
 static const interrupt_t    CONTROL_ISR         = interrupt::EXTI15_10;
 
-static const pin_t          PROBE               = PC11;
+static const pin_t          PROBE               = PC10;
+static const pin_t          COOLANT_FLOOD       = PC11;
+static const pin_t          COOLANT_MIST        = PC12;
 

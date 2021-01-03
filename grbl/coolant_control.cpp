@@ -18,18 +18,21 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+extern "C"
+{
 #include "grbl.h"
+}
+#include "board.h"
 
+using coolant_flood = output_t<COOLANT_FLOOD>;
+using coolant_mist = output_t<COOLANT_MIST>;
 
 void coolant_init()
 {
-/*
- * FIXME!
-  COOLANT_FLOOD_DDR |= (1 << COOLANT_FLOOD_BIT); // Configure as output pin
+  coolant_flood::setup();
   #ifdef ENABLE_M7
-    COOLANT_MIST_DDR |= (1 << COOLANT_MIST_BIT);
+    coolant_mist::setup();
   #endif
-*/
   coolant_stop();
 }
 
@@ -38,25 +41,23 @@ void coolant_init()
 uint8_t coolant_get_state()
 {
   uint8_t cl_state = COOLANT_STATE_DISABLE;
-/*
- * FIXME!
+
   #ifdef INVERT_COOLANT_FLOOD_PIN
-    if (bit_isfalse(COOLANT_FLOOD_PORT,(1 << COOLANT_FLOOD_BIT))) {
+    if (!coolant_flood::read()) {
   #else
-    if (bit_istrue(COOLANT_FLOOD_PORT,(1 << COOLANT_FLOOD_BIT))) {
+    if (coolant_flood::read()) {
   #endif
     cl_state |= COOLANT_STATE_FLOOD;
   }
   #ifdef ENABLE_M7
     #ifdef INVERT_COOLANT_MIST_PIN
-      if (bit_isfalse(COOLANT_MIST_PORT,(1 << COOLANT_MIST_BIT))) {
+      if (!coolant_mist::read()) {
     #else
-      if (bit_istrue(COOLANT_MIST_PORT,(1 << COOLANT_MIST_BIT))) {
+      if (coolant_mist::read()) {
     #endif
       cl_state |= COOLANT_STATE_MIST;
     }
   #endif
-*/
   return(cl_state);
 }
 
@@ -65,21 +66,18 @@ uint8_t coolant_get_state()
 // an interrupt-level. No report flag set, but only called by routines that don't need it.
 void coolant_stop()
 {
-/*
- * FIXME!
   #ifdef INVERT_COOLANT_FLOOD_PIN
-    COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
+    coolant_flood::set();
   #else
-    COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
+    coolant_flood::clear();
   #endif
   #ifdef ENABLE_M7
     #ifdef INVERT_COOLANT_MIST_PIN
-      COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
+      coolant_mist::set();
     #else
-      COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
+      coolant_mist::clear();
     #endif
   #endif
-*/
 }
 
 
@@ -89,42 +87,39 @@ void coolant_stop()
 // parser program end, and g-code parser coolant_sync().
 void coolant_set_state(uint8_t mode)
 {
-/*
- * FIXME!
   if (sys.abort) { return; } // Block during abort.  
   
 	if (mode & COOLANT_FLOOD_ENABLE) {
 		#ifdef INVERT_COOLANT_FLOOD_PIN
-			COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
+            coolant_flood::clear();
 		#else
-			COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
+            coolant_flood::set();
 		#endif
 	} else {
 	  #ifdef INVERT_COOLANT_FLOOD_PIN
-			COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
+            coolant_flood::set();
 		#else
-			COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
+            coolant_flood::clear();
 		#endif
 	}
   
 	#ifdef ENABLE_M7
 		if (mode & COOLANT_MIST_ENABLE) {
 			#ifdef INVERT_COOLANT_MIST_PIN
-				COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
+                coolant_mist::clear();
 			#else
-				COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
+                coolant_mist::set();
 			#endif
 		} else {
 			#ifdef INVERT_COOLANT_MIST_PIN
-				COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
+                coolant_mist::set();
 			#else
-				COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
+                coolant_mist::clear();
 			#endif
 		}
 	#endif
 	
   sys.report_ovr_counter = 0; // Set to report change immediately
-*/
 }
 
 

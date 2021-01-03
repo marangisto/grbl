@@ -30,18 +30,18 @@
 
 
 // Initializes coolant control pins.
-void coolant_init();
+EXTERN_C void coolant_init();
 
 // Returns current coolant output state. Overrides may alter it from programmed state.
-uint8_t coolant_get_state();
+EXTERN_C uint8_t coolant_get_state();
 
 // Immediately disables coolant pins.
-void coolant_stop();
+EXTERN_C void coolant_stop();
 
 // Sets the coolant pins according to state specified.
-void coolant_set_state(uint8_t mode);
+EXTERN_C void coolant_set_state(uint8_t mode);
 
 // G-code parser entry-point for setting coolant states. Checks for and executes additional conditions.
-void coolant_sync(uint8_t mode);
+EXTERN_C void coolant_sync(uint8_t mode);
 
 #endif
