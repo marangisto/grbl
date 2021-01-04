@@ -2,6 +2,7 @@
   grbl.h - main Grbl include file
   Part of Grbl
 
+  Copyright (c) 2020-2021 Bengt Marten Agren
   Copyright (c) 2015-2016 Sungeun K. Jeon for Gnea Research LLC
 
   Grbl is free software: you can redistribute it and/or modify

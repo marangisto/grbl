@@ -2,6 +2,7 @@
   probe.h - code pertaining to probing methods
   Part of Grbl
 
+  Copyright (c) 2020-2021 Bengt Marten Agren
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
 
   Grbl is free software: you can redistribute it and/or modify

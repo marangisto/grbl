@@ -2,6 +2,7 @@
   system.h - Header for system level commands and real-time processes
   Part of Grbl
 
+  Copyright (c) 2020-2021 Bengt Marten Agren
   Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
 
   Grbl is free software: you can redistribute it and/or modify
