@@ -25,7 +25,7 @@
 settings_t settings;
 
 const /*__flash*/ settings_t defaults = {\
-    .pulse_microseconds = DEFAULT_STEP_PULSE_MICROSECONDS,
+    .pulse_nanoseconds = DEFAULT_STEP_PULSE_NANOSECONDS,
     .stepper_idle_lock_time = DEFAULT_STEPPER_IDLE_LOCK_TIME,
     .step_invert_mask = DEFAULT_STEPPING_INVERT_MASK,
     .dir_invert_mask = DEFAULT_DIRECTION_INVERT_MASK,
@@ -230,8 +230,8 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value) {
     uint8_t int_value = trunc(value);
     switch(parameter) {
       case 0:
-        if (int_value < 2) { return(STATUS_SETTING_STEP_PULSE_MIN); }
-        settings.pulse_microseconds = int_value; break;
+        if (value < 50.0) { return(STATUS_SETTING_STEP_PULSE_MIN); }
+        settings.pulse_nanoseconds = (uint16_t) value; break;
       case 1: settings.stepper_idle_lock_time = int_value; break;
       case 2:
         settings.step_invert_mask = int_value;

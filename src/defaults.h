@@ -2,6 +2,7 @@
   defaults.h - defaults settings configuration file
   Part of Grbl
 
+  Copyright (c) 2021 Bengt Marten Agren
   Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
 
   Grbl is free software: you can redistribute it and/or modify
@@ -43,7 +44,7 @@
   #define DEFAULT_Z_MAX_TRAVEL 200.0 // mm NOTE: Must be a positive value.
   #define DEFAULT_SPINDLE_RPM_MAX 1000.0 // rpm
   #define DEFAULT_SPINDLE_RPM_MIN 0.0 // rpm
-  #define DEFAULT_STEP_PULSE_MICROSECONDS 10
+  #define DEFAULT_STEP_PULSE_NANOSECONDS 2000
   #define DEFAULT_STEPPING_INVERT_MASK 0
   #define DEFAULT_DIRECTION_INVERT_MASK 0
   #define DEFAULT_STEPPER_IDLE_LOCK_TIME 25 // msec (0-254, 255 keeps steppers enabled)

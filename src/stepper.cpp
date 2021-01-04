@@ -32,7 +32,12 @@ using step = outputs_t<X_STEP, Y_STEP, Z_STEP>;
 using direction = outputs_t<X_DIRECTION, Y_DIRECTION, Z_DIRECTION>;
 
 using step_timer = tim_t<STEP_TIMER_NO>;
-using reset_timer = tim_t<RESET_TIMER_NO>;
+using pulse_timer = tim_t<PULSE_TIMER_NO>;
+
+using x_pulse = pulse_timer::pwm<X_PULSE_CHAN, X_STEP>;
+using y_pulse = pulse_timer::pwm<Y_PULSE_CHAN, Y_STEP>;
+using z_pulse = pulse_timer::pwm<Z_PULSE_CHAN, Z_STEP>;
+using dual_pulse = pulse_timer::pwm<DUAL_PULSE_CHAN, DUAL_STEP>;
 
 using led = output_t<LED>;
 
@@ -121,12 +126,8 @@ typedef struct {
   uint32_t counter_x,        // Counter variables for the bresenham line tracer
            counter_y,
            counter_z;
-  #ifdef STEP_PULSE_DELAY
-    uint8_t step_bits;  // Stores out_bits output to complete the step pulse delay
-  #endif
 
   uint8_t execute_step;     // Flags step execution for each interrupt.
-  uint8_t step_pulse_time;  // Step pulse reset time after step rise
   uint8_t step_outbits;         // The next stepping-bits to be output
   uint8_t dir_outbits;
   #ifdef ENABLE_DUAL_AXIS
@@ -141,6 +142,8 @@ typedef struct {
   uint8_t exec_block_index; // Tracks the current st_block index. Change indicates new block.
   st_block_t *exec_block;   // Pointer to the block data for the segment being executed
   segment_t *exec_segment;  // Pointer to the segment being executed
+
+  pulse_timer::count_t pulse_duty; // Step pulse duty (determines delay)
 } stepper_t;
 static stepper_t st;
 
@@ -246,22 +249,18 @@ void st_wake_up()
     steppers_disable::write(bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE));
 
   // Initialize stepper output bits to ensure first ISR call does not step.
+  // FIXME: use invert_mast to set channel polarity!
   st.step_outbits = step_port_invert_mask;
   // Initialize step pulse timing from settings. Here to ensure updating after re-writing.
-  #ifdef STEP_PULSE_DELAY
-  static_assert(false, "implement STEP_PULSE_DELAY");
-    // Set total step pulse time after direction pin set. Ad hoc computation from oscilloscope.
-    st.step_pulse_time = -(((settings.pulse_microseconds+STEP_PULSE_DELAY-2)*TICKS_PER_MICROSECOND) >> 3);
-    // Set delay between direction pin write and step command.
-    OCR0A = -(((settings.pulse_microseconds)*TICKS_PER_MICROSECOND) >> 3);
-  #else // Normal operation
-    // Set step pulse time. Ad hoc computation from oscilloscope. Uses two's complement.
-    reset_timer::set_auto_reload_value
-        ( (settings.pulse_microseconds - 1)
-        * (reset_timer::clock() / 1000000)
-        - 1
-        );
-  #endif
+  // Set step pulse timings.
+  // FIXME: add pulse-delay to settings!
+  const auto c1 = STEP_PULSE_DELAY * (pulse_timer::clock() / 1000000) / 1000;
+  const auto c2 = settings.pulse_nanoseconds * (pulse_timer::clock() / 1000000) / 1000;
+
+  pulse_timer::set_auto_reload_value(c1 + c2);
+  st.pulse_duty = c1;
+
+  // Launch main stepper timer interrupts.
   step_timer::set_count(0);
   step_timer::clear_update_interrupt_flag();
   step_timer::enable_update_interrupt();
@@ -349,27 +348,17 @@ template<> void handler<STEP_TIMER_ISR>()
   #endif
 
   // Then pulse the stepping pins
-  #ifdef STEP_PULSE_DELAY
-    static_assert(false, "implement STEP_PULSE_DELAY");
-    st.step_bits = (STEP_PORT & ~STEP_MASK) | st.step_outbits; // Store out_bits to prevent overwriting.
-    #ifdef ENABLE_DUAL_AXIS
+  // FIXME: use symbolic bit positions!
+  x_pulse::duty(st.pulse_duty | ((st.step_outbits & 0x1) ? 0 : 0xffff));
+  y_pulse::duty(st.pulse_duty | ((st.step_outbits & 0x2) ? 0 : 0xffff));
+  z_pulse::duty(st.pulse_duty | ((st.step_outbits & 0x4) ? 0 : 0xffff));
+  #ifdef ENABLE_DUAL_AXIS
     static_assert(false, "implement ENABLE_DUAL_AXIS");
-      st.step_bits_dual = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
-    #endif
-  #else  // Normal operation
-    step::write(st.step_outbits);
-    #ifdef ENABLE_DUAL_AXIS
-    static_assert(false, "implement ENABLE_DUAL_AXIS");
-      STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
-    #endif
+    dual_pulse::duty(st.pulse_duty | ((st.step_outbits & 0x8) ? 0 : 0xffff));
   #endif
 
-  // Enable step pulse reset timer so that The Stepper Port Reset Interrupt can reset the signal after
-  // exactly settings.pulse_microseconds microseconds, independent of the main Timer1 prescaler.
-  reset_timer::set_count(0);
-  reset_timer::clear_update_interrupt_flag();
-  reset_timer::enable_update_interrupt();
-
+  // Fire the one-pulse timer (with built-in delay per configuration).
+  pulse_timer::enable();
   busy = true;
   // NOTE: The remaining code in this ISR will finish before returning to main program.
 
@@ -499,44 +488,6 @@ template<> void handler<STEP_TIMER_ISR>()
   busy = false;
 }
 
-/* The Stepper Port Reset Interrupt: Timer0 OVF interrupt handles the falling edge of the step
-   pulse. This should always trigger before the next Timer1 COMPA interrupt and independently
-   finish, if Timer1 is disabled after completing a move.
-   NOTE: Interrupt collisions between the serial and stepper interrupts can cause delays by
-   a few microseconds, if they execute right before one another. Not a big deal, but can
-   cause issues at high step rates if another high frequency asynchronous interrupt is
-   added to Grbl.
-*/
-// This interrupt is enabled by ISR_TIMER1_COMPAREA when it sets the motor port bits to execute
-// a step. This ISR resets the motor port after a short period (settings.pulse_microseconds)
-// completing one step cycle.
-template<> void handler<RESET_TIMER_ISR>()
-{
-    reset_timer::disable_update_interrupt();
-    step::write(step_port_invert_mask);
-  #ifdef ENABLE_DUAL_AXIS
-    static_assert(false, "implement ENABLE_DUAL_AXIS");
-    STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | (step_port_invert_mask_dual & STEP_MASK_DUAL);
-  #endif
-}
-
-#ifdef STEP_PULSE_DELAY
-  // This interrupt is used only when STEP_PULSE_DELAY is enabled. Here, the step pulse is
-  // initiated after the STEP_PULSE_DELAY time period has elapsed. The ISR TIMER2_OVF interrupt
-  // will then trigger after the appropriate settings.pulse_microseconds, as in normal operation.
-  // The new timing between direction, step pulse, and step complete events are setup in the
-  // st_wake_up() routine.
-  static_assert(false, "implement STEP_PULSE_DELAY");
-  ISR(TIMER0_COMPA_vect)
-  {
-    STEP_PORT = st.step_bits; // Begin step pulse.
-    #ifdef ENABLE_DUAL_AXIS
-      STEP_PORT_DUAL = st.step_bits_dual;
-    #endif
-  }
-#endif
-
-
 // Generates the step and direction port invert masks used in the Stepper Interrupt Driver.
 void st_generate_step_dir_invert_masks()
 {
@@ -601,13 +552,22 @@ void stepper_init()
     DIRECTION_DDR_DUAL |= DIRECTION_MASK_DUAL;
   #endif
 
-  // Configure Timer 1: Stepper Driver Interrupt
+  // Configure Step timer: Stepper Driver Interrupt
 
   step_timer::setup(1, 0xffff);
   interrupt::set<STEP_TIMER_ISR>();
 
-  reset_timer::setup(0, 1);
-  interrupt::set<RESET_TIMER_ISR>();
+  // Configure Pulse timer: Stepper One-Pulse Generator
+
+  pulse_timer::setup();
+  pulse_timer::set_one_pulse_mode();
+
+  x_pulse::setup<pwm_mode_2>();
+  y_pulse::setup<pwm_mode_2>();
+  z_pulse::setup<pwm_mode_2>();
+  #ifdef ENABLE_DUAL_AXIS
+    dual_pulse::setup<pwm_mode_2>();
+  #endif
 
   led::setup();
 }
@@ -864,7 +824,7 @@ void st_prep_buffer()
         bit_true(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM); // Force update whenever updating block.
       #endif
     }
-    
+
     // Initialize new segment
     segment_t *prep_segment = &segment_buffer[segment_buffer_head];
 

@@ -92,7 +92,7 @@ typedef struct {
   float max_travel[N_AXIS];
 
   // Remaining Grbl settings
-  uint8_t pulse_microseconds;
+  uint16_t pulse_nanoseconds;
   uint8_t step_invert_mask;
   uint8_t dir_invert_mask;
   uint8_t stepper_idle_lock_time; // If max value 255, steppers do not disable.

@@ -35,18 +35,23 @@ static const interrupt_t    SERIAL_ISR = interrupt::USART2;
 static const int            STEP_TIMER_NO = 2;
 static const interrupt_t    STEP_TIMER_ISR = interrupt::TIM2;
 
-static const int            RESET_TIMER_NO = 15;
-static const interrupt_t    RESET_TIMER_ISR = interrupt::TIM1_BRK_TIM15;
+static const int            PULSE_TIMER_NO = 4;
+static const channel_t      X_PULSE_CHAN = CH1;
+static const channel_t      Y_PULSE_CHAN = CH2;
+static const channel_t      Z_PULSE_CHAN = CH3;
+static const channel_t      DUAL_PULSE_CHAN = CH4;
 
-static const pin_t          X_STEP              = PB1;
-static const pin_t          Y_STEP              = PB2;
-static const pin_t          Z_STEP              = PB3;
+static const pin_t          X_STEP              = PB6;
+static const pin_t          Y_STEP              = PB7;
+static const pin_t          Z_STEP              = PB8;
+static const pin_t          DUAL_STEP           = PB9;
 
-static const pin_t          X_DIRECTION         = PB4;
-static const pin_t          Y_DIRECTION         = PB5;
-static const pin_t          Z_DIRECTION         = PB6;
+static const pin_t          X_DIRECTION         = PB0;
+static const pin_t          Y_DIRECTION         = PB1;
+static const pin_t          Z_DIRECTION         = PB2;
+static const pin_t          DUAL_DIRECTION      = PB3;
 
-static const pin_t          STEPPERS_DISABLE    = PB0;
+static const pin_t          STEPPERS_DISABLE    = PB4;
 
 static const pin_t          X_LIMIT             = PA6;
 static const pin_t          Y_LIMIT             = PA7;
