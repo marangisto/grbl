@@ -1,4 +1,14 @@
 ------------------------------------------------------------------------------
+COPYRIGHT NOTICE FOR JIRD:
+------------------------------------------------------------------------------
+Jird - Embedded CNC g-code interpreter and motion-controller
+
+Copyright (c) 2020-2021 Bengt Marten Agren
+
+Jird is a project derived from GRBL for which the original copyright
+notices are retained below.
+
+------------------------------------------------------------------------------
 COPYRIGHT NOTICE FOR GRBL:
 ------------------------------------------------------------------------------
 

@@ -171,7 +171,7 @@ void report_feedback_message(uint8_t message_code)
 // Welcome message
 void report_init_message()
 {
-  printPgmString(PSTR("\r\nGrbl " GRBL_VERSION " ['$' for help]\r\n"));
+  printPgmString(PSTR("\r\nJird " GRBL_VERSION " ['$' for help]\r\n"));
 }
 
 // Grbl help message
